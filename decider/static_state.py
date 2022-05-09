@@ -15,3 +15,5 @@ class StaticState:
         self.CPU = multiprocessing.cpu_count()
         self.SSD = psutil.disk_usage('/').total
         self.OS = OS.LINUX if 'Linux' in platform.platform() else OS.MacOS
+        self.DB_SIZE = 700
+        self.max_connections = 1
