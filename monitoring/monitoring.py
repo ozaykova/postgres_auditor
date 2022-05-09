@@ -17,6 +17,10 @@ class Monitoring:
         svmem = psutil.virtual_memory()
         self.system_info.RAM = svmem.used
         self.system_info.SSD = psutil.disk_usage('/').used
+        # TODO: use name param here
+        conn = TargetDbConnector('demo')
+        self.system_info.open_connections_cnt = conn.get_connections_count()[0][0]
+        print(self.system_info.open_connections_cnt)
 
     def fill_process_activity(self):
         process_data = []
