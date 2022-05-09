@@ -13,7 +13,8 @@ class StaticState:
     def __init__(self):
         self.RAM = psutil.virtual_memory().total
         self.CPU = multiprocessing.cpu_count()
-        self.SSD = psutil.disk_usage('/').total
+        self.Disk = psutil.disk_usage('/').total
+        self.is_ssd = True
         self.OS = OS.LINUX if 'Linux' in platform.platform() else OS.MacOS
         self.DB_SIZE = 700
         self.max_connections = 1
