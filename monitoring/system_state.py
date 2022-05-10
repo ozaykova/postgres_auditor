@@ -17,5 +17,7 @@ class SystemState:
         self.RAM = 0
         self.DBType = DBType.Mixed.value
         self.DBSize = 0
+        self.max_index_size = 0
+        self.max_table_size = 0
         self.read_transactions_cnt = 0
         self.open_connections_cnt = 0

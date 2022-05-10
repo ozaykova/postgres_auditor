@@ -16,5 +16,5 @@ class StaticState:
         self.Disk = psutil.disk_usage('/').total
         self.is_ssd = True
         self.OS = OS.LINUX if 'Linux' in platform.platform() else OS.MacOS
-        self.DB_SIZE = 700
+        self.DB_SIZE = 0
         self.max_connections = 1

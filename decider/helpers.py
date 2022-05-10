@@ -29,14 +29,29 @@ class TargetDbExplorer:
         for setting in settings:
             self.config[setting[0]] = {'val': setting[1], 'unit': setting[2]}
 
-    def get_db_size(self):
-        cur_size = self.conn.get_db_size()[0][0]
-        unit = cur_size[-2:]
-        actual_size = 0
+    def convert_data(self, unit, cur_size):
+        actual_size = 0.0
         if unit == 'MB':
             actual_size = float(cur_size[:-3])
         if unit == 'GB':
             actual_size = float(cur_size[:-3]) * 1024
         if unit == 'KB' or unit == 'kB':
             actual_size = float(cur_size[:-3]) / 1024
+        if unit == 'es':
+            actual_size = float(cur_size[:-6]) / 1024 / 1024
         return actual_size
+
+    def get_db_size(self):
+        cur_size = self.conn.get_db_size()[0][0]
+        unit = cur_size[-2:]
+        return self.convert_data(unit, cur_size)
+
+    def get_max_indexes_size(self):
+        sizes = self.conn.get_indexes_sizes()
+        return self.convert_data(sizes[0][1][-2:], sizes[0][1])
+
+    def get_biggest_table_size(self):
+        sizes = self.conn.get_biggest_table_size()
+        return self.convert_data(sizes[0][1][-2:], sizes[0][1])
+
+
