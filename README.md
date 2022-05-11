@@ -15,10 +15,10 @@ Change file config.py in decider directory(fill actual info about db, user etc.)
 Add monitoring.py to cron process (recommendation: run it once in 10 min)
 
 # Results
-Console input contain: \
+Console input contain: 
 1. Settings recommendations
-2. Info about resources-bounded processes \
-3. Info about queries with most longer duration \
+2. Info about resources-bounded processes 
+3. Info about queries with most longer duration 
 4. File postgres_generated.conf with target configuration
 
 # Future work
