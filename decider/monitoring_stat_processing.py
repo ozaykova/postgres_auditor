@@ -59,8 +59,7 @@ class StatisticAggregator:
                 self.per_process_aggregation[stripped_item]['CPU'] += item[3]
                 self.per_process_aggregation[stripped_item]['MEM'] = max(item[4], self.per_process_aggregation[stripped_item]['MEM'])
 
-        print('kek')
-        print(self.per_process_aggregation)
+
         self.process_by_cpu = sorted(
             [(process, vals['CPU']) for process, vals in self.per_process_aggregation.items()],
             key=lambda x: x[1],

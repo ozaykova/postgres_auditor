@@ -1,6 +1,5 @@
 import re
 
-PATH = '/opt/homebrew/var/log/postgres_logs/postgresql-2022-05-08_000000.log'
 TIME_PATTERN = r'\b\d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d\.\d{3}\s\w{3}'
 SENDER_PATTERN = r'\[.*\]'
 DURATION_PATTERN = r'duration:.*statement:'

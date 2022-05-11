@@ -4,9 +4,12 @@ from helpers import *
 from monitoring_stat_processing import *
 from math import log
 from log_processor.log_collector import *
+from decider.config import CONFIG
+import time
 
 GB = 1024 * 1024 * 1024
 MB = 1024 * 1024
+SECONDS_IN_DAY = 86400
 
 
 class BasicConfigurator:
@@ -182,10 +185,13 @@ def main():
     system_state.max_table_size = db_info.get_biggest_table_size()
     conn = MonitoringDBConnector()
 
-    # TODO: Time from config (now - time_to_check)
-    monitoring_data = conn.select_monitoring(0)
-    per_process_data = conn.select_process_stat(0)
+    ts = int(time.time())
+    start_time = ts - CONFIG['check_days'] * SECONDS_IN_DAY
+    monitoring_data = conn.select_monitoring(start_time)
+    per_process_data = conn.select_process_stat(start_time)
+
     hardware_stat = StatisticAggregator(monitoring_data, per_process_data)
+
     basic_conf = BasicConfigurator(hardware_stat, system_state, db_info.config)
     basic_conf.configure()
 
@@ -220,7 +226,7 @@ def main():
     print('__________________________________')
     hardware_stat.print_proc_stat()
     print('__________________________________')
-    collector = LogCollector('/opt/homebrew/var/log/postgres_logs')
+    collector = LogCollector(CONFIG['logs_directory'])
     collector.process()
     print('Most expensive queries:')
     for query in collector.top_requests:

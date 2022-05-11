@@ -1,5 +1,6 @@
 import psycopg2
 from psycopg2.extras import Json
+from decider.config import CONFIG
 
 
 class DBHelper:
@@ -8,8 +9,7 @@ class DBHelper:
 
 class MonitoringDBConnector:
     def __init__(self):
-        # TODO: move to config user/password
-        self.conn = psycopg2.connect(dbname='postgres_auditor', user='postgres', password='1234', host='localhost')
+        self.conn = psycopg2.connect(dbname='postgres_auditor', user=CONFIG['user'], password=CONFIG['password'], host='localhost')
         self.cursor = self.conn.cursor()
         self.wrapper = DBHelper()
 
@@ -39,7 +39,7 @@ class MonitoringDBConnector:
 class TargetDbConnector:
     def __init__(self, db_name):
         self.db_name = db_name
-        self.conn = psycopg2.connect(dbname=db_name, user='postgres', password='1234', host='localhost')
+        self.conn = psycopg2.connect(dbname=db_name, user=CONFIG['user'], password=CONFIG['password'], host='localhost')
         self.cursor = self.conn.cursor()
         self.wrapper = DBHelper()
 
