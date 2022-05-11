@@ -13,7 +13,7 @@ SECONDS_IN_DAY = 86400
 
 
 class BasicConfigurator:
-    def __init__(self, hw_stat, state, default):
+    def __init__(self, hw_stat, state, default, total_req_cnt, sort_cnt):
         self.hardware_stat = hw_stat
         self.mem_descr = dict()
         self.autovac_descr = dict()
@@ -23,6 +23,8 @@ class BasicConfigurator:
         self.config = default
         self.system_state = state
         self.default_conf = default
+        self.total_req = total_req_cnt
+        self.sort_req_cnt = sort_cnt
 
     def configure_connections(self):
         self.config['max_connections']['val'] = self.hardware_stat.Connections.max + 10 # some epsilon
@@ -66,7 +68,7 @@ class BasicConfigurator:
         self.mem_descr['maintenance_work_mem'] = f'Maintenance work mem should be around 5% of RAM: {self.config["maintenance_work_mem"]["val"]}MB'
 
     def check_sort_operations(self):
-        return False
+        return 10 * self.sort_req_cnt > self.total_req
 
     def configure_autovacuum(self):
         if 'autovacuum' in self.default_conf and 'on' not in self.default_conf['autovacuum']['val']:
@@ -192,7 +194,10 @@ def main():
 
     hardware_stat = StatisticAggregator(monitoring_data, per_process_data)
 
-    basic_conf = BasicConfigurator(hardware_stat, system_state, db_info.config)
+    collector = LogCollector(CONFIG['logs_directory'])
+    collector.process()
+
+    basic_conf = BasicConfigurator(hardware_stat, system_state, db_info.config, collector.total_cnt, collector.sort_cnt)
     basic_conf.configure()
 
     print('SETTINGS ADJUSTMENT')
@@ -226,8 +231,7 @@ def main():
     print('__________________________________')
     hardware_stat.print_proc_stat()
     print('__________________________________')
-    collector = LogCollector(CONFIG['logs_directory'])
-    collector.process()
+
     print('Most expensive queries:')
     for query in collector.top_requests:
         print(query)
