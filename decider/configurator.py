@@ -231,4 +231,11 @@ def main():
     print('Most expensive queries:')
     for query in collector.top_requests:
         print(query)
+
+    conf_file = open("postgres_generated.conf", "w+")
+    for k, val in basic_conf.config.items():
+        conf_file.write(str(k) + ' = ' + str(val['val']))
+        if val['unit']:
+            conf_file.write(' ' + val['unit'])
+        conf_file.write('\n')
 main()

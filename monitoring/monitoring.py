@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 from system_state import *
 from db_tools.connector import *
 import psutil
@@ -51,6 +53,7 @@ def main():
     monitoring = Monitoring()
     monitoring.fill_system_info()
     data = json.dumps(monitoring.system_info.__dict__)
+    print(data)
     conn = MonitoringDBConnector()
     conn.insert_monitoring(int(time()), data)
     monitoring.fill_process_activity()
