@@ -20,8 +20,6 @@ Console input contain:
 2. Info about resources-bounded processes 
 3. Info about queries with most longer duration 
 4. File postgres_generated.conf with target configuration
-
-# Future work
-1. Explore activity trands based on statistics
-2. Explain longest queries and change planner settings + indexes check
+5. Explore activity trands based on statistics
+6. Explain longest queries and change planner settings + indexes check
 
