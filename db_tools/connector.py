@@ -70,3 +70,10 @@ class TargetDbConnector:
                             f"nspname NOT IN ('pg_catalog', 'information_schema') AND X .relkind <> 'i' AND nspname !~ '^pg_toast' "
                             f"ORDER BY pg_total_relation_size (X .oid) DESC LIMIT 1;")
         return self.cursor.fetchall()
+
+    def get_explanation(self, query):
+        try:
+            self.cursor.execute(f'explain {str(query)}')
+        except:
+            self.conn.rollback()
+        return self.cursor.fetchall()

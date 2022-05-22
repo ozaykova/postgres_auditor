@@ -43,7 +43,7 @@ class Parser:
                     "time": time.strip(),
                     "sender": sender.strip(),
                     "duration": duration.strip() if duration else '0 ms',
-                    "statement": stmt.strip() if stmt else None
+                    "statement": re.sub(r'\s+', ' ', stmt.strip()) if stmt else None
                 })
         return parsed_log
     #process_stat = ([(p.info['name'], sum(p.info['cpu_times'] if p.info['cpu_times'] else [0])) for p in

@@ -5,7 +5,10 @@ from monitoring_stat_processing import *
 from math import log
 from log_processor.log_collector import *
 from decider.config import CONFIG
+from log_processor.query_analyzer import *
+from changes_applier.changes_applier import *
 import time
+import os
 
 GB = 1024 * 1024 * 1024
 MB = 1024 * 1024
@@ -40,7 +43,7 @@ class BasicConfigurator:
             self.config['shared_buffers']['val'] = '2'
             self.config['shared_buffers']['unit'] = 'GB'
         else:
-            ram = int(free_ram * GB / 1024)
+            ram = int(free_ram * GB / 4 / MB)
             self.config['shared_buffers']['val'] = str(ram)
             self.config['shared_buffers']['unit'] = 'MB'
         self.mem_descr['shared_buffers'] = f'Free RAM space {free_ram / GB} GB, shared buffers should be {self.config["shared_buffers"]["val"]} MB'
@@ -60,7 +63,7 @@ class BasicConfigurator:
 
         if int(self.config['work_mem']['val']) > 40 and self.config['work_mem']['unit'] == 'MB':
             self.config['hash_mem_multiplier']['val'] = '2.0'
-            self.mem_descr['hash_mem_multiplier'] = f'You should increase work_mem up to 2.0 to prevent memory pressure due to' \
+            self.mem_descr['hash_mem_multiplier'] = f'You should increase hash_mem_multiplier up to 2.0 to prevent memory pressure due to' \
                                                     f' server has more than 40MB work_mem setting'
 
         self.config['maintenance_work_mem']['val'] = str(int(0.05 * self.system_state.RAM / MB))
@@ -107,7 +110,7 @@ class BasicConfigurator:
 
         self.config['autovacuum_work_mem']['val'] = max(int(self.config['maintenance_work_mem']['val']) / max(int(self.config['autovacuum_max_workers']['val']) - 2, 1), 1)
         self.config['autovacuum_work_mem']['unit'] = self.config['maintenance_work_mem']['unit']
-        self.autovac_descr['autovacuum_work_mem'] = f'autovacuum_work_mem should be not around of work_mem / autovacuum workers count'
+        self.autovac_descr['autovacuum_work_mem'] = f'autovacuum_work_mem should be around of work_mem / autovacuum workers count'
 
     def configure_wal(self):
         if 'fsync' in self.default_conf and 'off' in self.default_conf['fsync']['val']:
@@ -135,7 +138,7 @@ class BasicConfigurator:
         if self.hardware_stat.is_high_cpu_load or self.hardware_stat.is_high_mem_load:
             self.config['cpu_tuple_cost']['val'] = '0.01'
             self.config['cpu_index_tuple_cost']['val'] = '0.01'
-            self.planner_descr['cpu_tuple_cost'] = f'system has high cpu/memory utilization, cpu_tuple_cost should be 0.01 witch can result in better query plans'
+            self.planner_descr['cpu_tuple_cost'] = f'system has high cpu/memory utilization, cpu_tuple_cost should be 0.01 which can result in better query plans'
             self.config['cpu_operator_cost']['val'] = '0.00025'
             self.planner_descr['cpu_operator_cost'] = f'cpu operator cost should be {self.config["cpu_operator_cost"]["val"]}'
         else:
@@ -222,24 +225,93 @@ def main():
         print(v)
     print()
 
-    print('Additional Recommendations')
-    recommendations = ConfigRecommendations(basic_conf.config)
-    recommendations.process()
-    for k, v in recommendations.recommendations.items():
-        print(str(k) + " " + str(v))
-
-    print('__________________________________')
-    hardware_stat.print_proc_stat()
-    print('__________________________________')
-
-    print('Most expensive queries:')
-    for query in collector.top_requests:
-        print(query)
-
     conf_file = open("postgres_generated.conf", "w+")
+    target_path = ''
+    conf_path = str(os.getcwd()) + '/' + 'postgres_generated.conf'
     for k, val in basic_conf.config.items():
-        conf_file.write(str(k) + ' = ' + str(val['val']))
-        if val['unit']:
-            conf_file.write(' ' + val['unit'])
-        conf_file.write('\n')
+        if k == 'config_path':
+            target_path = val['val']
+        if val['val']:
+            conf_file.write(str(k) + ' = ' + str(val['val']))
+            if val['unit']:
+                conf_file.write(' ' + val['unit'])
+            conf_file.write('\n')
+    while True:
+        print('Select an action: \n [1] Show additional recommendations \n [2] Show processes stat \n [3] Show the longest queries'
+              '\n [4] Show activity insights \n [5] Show index recommendations \n [6] Apply changes \n [7] Exit')
+        action_type = input()
+        if action_type == '1':
+            print('Additional Recommendations:')
+            recommendations = ConfigRecommendations(basic_conf.config)
+            recommendations.process()
+            for k, v in recommendations.recommendations.items():
+                print(str(k) + " " + str(v))
+            print('__________________________________')
+            print('Select an action: \n [1] Back to main menu \n [2] Exit app')
+            action_type = input()
+            if action_type == '1':
+                continue
+            else:
+                return
+
+        if action_type == '2':
+            print('Processes stat:')
+            hardware_stat.print_proc_stat()
+            print('__________________________________')
+            print('Select an action: \n [1] Back to main menu \n [2] Exit app')
+            action_type = input()
+            if action_type == '1':
+                continue
+            else:
+                return
+
+        if action_type == '3':
+            print('Top of the longest queries:')
+            collector.fill_top_requests(print_it=True)
+            print('__________________________________')
+            print('Select an action: \n [1] Back to main menu \n [2] Exit app')
+            action_type = input()
+            if action_type == '1':
+                continue
+            else:
+                return
+
+        if action_type == '4':
+            hardware_stat.print_activity_insights()
+            print('__________________________________')
+            print('Select an action: \n [1] Back to main menu \n [2] Exit app')
+            action_type = input()
+            if action_type == '1':
+                continue
+            else:
+                return
+
+        if action_type == '5':
+            print('Indexes recommendations:')
+            collector.fill_top_requests()
+            recommendations_set = set()
+            for query in collector.top_requests:
+                # print(query)
+                analyzer = QueryAnalyzer(query)
+                analyzer.process_analyze()
+                recommendations_set.update(analyzer.recommendations)
+            for item in recommendations_set:
+                print(item)
+            print('__________________________________')
+            print('Select an action: \n [1] Back to main menu \n [2] Exit app')
+            action_type = input()
+            if action_type == '1':
+                continue
+            else:
+                return
+
+        if action_type == '6':
+            print('Enter hours to sleep:')
+            hrs = int(input())
+            applier = ChangesApplier(hrs, target_path, conf_path)
+            applier.perform_apply()
+
+        if action_type == '7':
+            return
+
 main()
